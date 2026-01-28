@@ -11,12 +11,12 @@ permissions:
     contents: write
 
 jobs:
-    create-release:
-        name: Create Release
+    prepare-release:
+        name: Prepare Release
         runs-on: ubuntu-latest
         outputs:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
             new_tag: ${{ steps.tag_version.outputs.new_tag }}
+            changelog: ${{ steps.build_changelog.outputs.changelog }}
         steps:
             - name: Checkout Code
               uses: actions/checkout@v4
@@ -56,35 +56,9 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Create Release
-              id: create_release
-              uses: softprops/action-gh-release@v2
-              with:
-                  tag_name: ${{ steps.tag_version.outputs.new_tag }}
-                  name: Release ${{ steps.tag_version.outputs.new_tag }}
-                  body: ${{ steps.build_changelog.outputs.changelog }}
-                  draft: false
-                  prerelease: false
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    build:
-        name: Build (${{ matrix.os }})
-        needs: create-release
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - os: windows-latest
-                      artifact_name: ViGen_Windows.exe
-                    - os: macos-latest # Run on M1 (Rosetta allows x64 build)
-                      architecture: x64
-                      artifact_name: ViGen_macOS_Intel.zip
-                    - os: macos-latest # Apple Silicon (M1)
-                      architecture: arm64
-                      artifact_name: ViGen_macOS_Silicon.zip
-
+    build-windows:
+        name: Build Windows
+        runs-on: windows-latest
         steps:
             - name: Checkout Code
               uses: actions/checkout@v4
@@ -93,7 +67,6 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: "3.12"
-                  architecture: ${{ matrix.architecture || 'x64' }} # Default to x64 for Windows
                   cache: "pip"
 
             - name: Install Dependencies
@@ -102,36 +75,126 @@ jobs:
                   pip install pyinstaller
                   pip install PyQt6 qasync qt-material "google-genai" "langchain" "langchain-community" "langchain-core" "langchain-openai" "moviepy" "pillow" "pydantic" "pyyaml" "tenacity" "tqdm" "requests" "httpx" "python-dotenv"
 
-            # Windows Build
-            - name: Build EXE (Windows)
-              if: runner.os == 'Windows'
+            - name: Build EXE
               run: |
                   pyinstaller --onefile --windowed --name ViGen --icon "gui/assets/logo.ico" gui/main.py
 
-            # macOS Build
-            - name: Build App (macOS)
-              if: runner.os == 'macOS'
+            - name: Upload Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ViGen_Windows
+                  path: dist/ViGen.exe
+
+    build-macos-intel:
+        name: Build macOS Intel
+        runs-on: macos-13 # Native Intel Runner
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.12"
+                  cache: "pip"
+
+            - name: Install Dependencies
               run: |
-                  # Create ICNS from PNG using Python Pillow (more robust than sips)
+                  python -m pip install --upgrade pip
+                  pip install pyinstaller
+                  pip install PyQt6 qasync qt-material "google-genai" "langchain" "langchain-community" "langchain-core" "langchain-openai" "moviepy" "pillow" "pydantic" "pyyaml" "tenacity" "tqdm" "requests" "httpx" "python-dotenv"
+
+            - name: Create Icon
+              run: |
                   python -c "from PIL import Image; img = Image.open('gui/assets/logo.png'); img.save('ViGen.icns', format='ICNS', sizes=[(16,16), (32,32), (48,48), (64,64), (128,128), (256,256), (512,512), (1024,1024)])"
 
-                  # Build .app bundle
+            - name: Build App
+              run: |
                   pyinstaller --windowed --name ViGen --icon ViGen.icns gui/main.py
 
-                  # Zip the app
-                  cd dist
-                  zip -r ../${{ matrix.artifact_name }} ViGen.app
-
-            - name: Rename Windows Asset
-              if: runner.os == 'Windows'
+            - name: Zip App
               run: |
-                  mv dist/ViGen.exe ${{ matrix.artifact_name }}
+                  cd dist
+                  zip -r ViGen_macOS_Intel.zip ViGen.app
 
-            - name: Upload Release Asset
+            - name: Upload Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ViGen_macOS_Intel
+                  path: dist/ViGen_macOS_Intel.zip
+
+    build-macos-silicon:
+        name: Build macOS Silicon
+        runs-on: macos-latest # Native ARM Runner
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.12"
+                  cache: "pip"
+
+            - name: Install Dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install pyinstaller
+                  pip install PyQt6 qasync qt-material "google-genai" "langchain" "langchain-community" "langchain-core" "langchain-openai" "moviepy" "pillow" "pydantic" "pyyaml" "tenacity" "tqdm" "requests" "httpx" "python-dotenv"
+
+            - name: Create Icon
+              run: |
+                  python -c "from PIL import Image; img = Image.open('gui/assets/logo.png'); img.save('ViGen.icns', format='ICNS', sizes=[(16,16), (32,32), (48,48), (64,64), (128,128), (256,256), (512,512), (1024,1024)])"
+
+            - name: Build App
+              run: |
+                  pyinstaller --windowed --name ViGen --icon ViGen.icns gui/main.py
+
+            - name: Zip App
+              run: |
+                  cd dist
+                  zip -r ViGen_macOS_Silicon.zip ViGen.app
+
+            - name: Upload Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ViGen_macOS_Silicon
+                  path: dist/ViGen_macOS_Silicon.zip
+
+    release:
+        name: Publish Release
+        needs: [prepare-release, build-windows, build-macos-intel, build-macos-silicon]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Download Windows Artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: ViGen_Windows
+                  path: output
+
+            - name: Download macOS Intel Artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: ViGen_macOS_Intel
+                  path: output
+
+            - name: Download macOS Silicon Artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: ViGen_macOS_Silicon
+                  path: output
+
+            - name: Create Release
               uses: softprops/action-gh-release@v2
-              if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'push'
+              with:
+                  tag_name: ${{ needs.prepare-release.outputs.new_tag }}
+                  name: Release ${{ needs.prepare-release.outputs.new_tag }}
+                  body: ${{ needs.prepare-release.outputs.changelog }}
+                  files: |
+                      output/ViGen.exe
+                      output/ViGen_macOS_Intel.zip
+                      output/ViGen_macOS_Silicon.zip
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ needs.create-release.outputs.new_tag }}
-                  files: ${{ runner.os == 'Windows' && matrix.artifact_name || matrix.artifact_name }}
