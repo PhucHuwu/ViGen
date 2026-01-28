@@ -75,13 +75,7 @@ jobs:
 
             - name: Build EXE
               run: |
-                  pyinstaller --onefile --windowed --name ViGen --icon "gui/assets/logo.ico" \
-                    --hidden-import PyQt6.QtCore \
-                    --hidden-import PyQt6.QtGui \
-                    --hidden-import PyQt6.QtWidgets \
-                    --collect-all PyQt6 \
-                    --collect-all qt_material \
-                    gui/main.py
+                  pyinstaller --onefile --windowed --name ViGen --icon "gui/assets/logo.ico" --hidden-import PyQt6.QtCore --hidden-import PyQt6.QtGui --hidden-import PyQt6.QtWidgets --collect-all PyQt6 --collect-all qt_material gui/main.py
 
             - name: Upload Artifact
               uses: actions/upload-artifact@v4
