@@ -41,11 +41,11 @@ class Idea2VideoTab(QWidget):
         input_layout.addWidget(self.txt_style)
 
         self.btn_run = QPushButton("Chạy (Generate Video)")
-        self.btn_run.setStyleSheet("background-color: #00796b; font-weight: bold; padding: 10px;")
+        self.btn_run.setProperty("class", "cta")  # CTA for main action
         self.btn_run.clicked.connect(self.run_pipeline)
 
         self.btn_clear = QPushButton("Xóa Cache (Reset)")
-        self.btn_clear.setStyleSheet("background-color: #d32f2f; font-weight: bold; padding: 10px;")
+        self.btn_clear.setProperty("class", "danger")  # Danger for delete
         self.btn_clear.clicked.connect(self.clear_cache)
 
         btn_layout = QVBoxLayout()
@@ -251,7 +251,7 @@ class Idea2VideoTab(QWidget):
                     logging.warning(f"Failed to load image at: {abs_path}")
                     lbl_img.setText(f"Error loading\n{char_name}")
                 else:
-                    lbl_img.setPixmap(pixmap.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio))
+                    lbl_img.setPixmap(pixmap.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
 
                 lbl_name = QLabel(char_name)
                 lbl_name.setAlignment(Qt.AlignmentFlag.AlignCenter)

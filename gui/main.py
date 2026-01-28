@@ -24,7 +24,7 @@ def get_config_dir():
     else:
         # Running from source - use local configs directory
         base_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'configs')
-    
+
     return base_dir
 
 
@@ -104,14 +104,14 @@ working_dir: .working_dir/script2video
 
 def main():
     ensure_configs()
-    
+
     # Fix Qt plugin paths for PyInstaller on macOS
     if hasattr(sys, '_MEIPASS'):
         # Running in PyInstaller bundle
         qt_plugin_path = os.path.join(sys._MEIPASS, 'PyQt6', 'Qt6', 'plugins')
         if os.path.exists(qt_plugin_path):
             QCoreApplication.setLibraryPaths([qt_plugin_path])
-    
+
     app = QApplication(sys.argv)
 
     # Setup Async Loop
@@ -119,8 +119,17 @@ def main():
     asyncio.set_event_loop(loop)
 
     # Apply Theme
-    # 'dark_teal.xml' is a popular choice, can be changed later
-    apply_stylesheet(app, theme='dark_teal.xml')
+    # Use qt_material as a base, then override with custom QSS
+    try:
+        apply_stylesheet(app, theme='dark_teal.xml', invert_secondary=True)
+    except:
+        pass  # Fallback if theme not found
+
+    # Load Custom Pro Max Styles
+    style_path = os.path.join(os.path.dirname(__file__), "assets", "style.qss")
+    if os.path.exists(style_path):
+        with open(style_path, "r") as f:
+            app.setStyleSheet(app.styleSheet() + "\n" + f.read())
 
     window = MainWindow()
     window.show()

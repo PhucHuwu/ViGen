@@ -34,7 +34,8 @@ class Script2VideoTab(QWidget):
         layout.addWidget(self.txt_style)
 
         self.btn_run = QPushButton("Chạy (Generate Video)")
-        self.btn_run.setStyleSheet("background-color: #00796b; font-weight: bold; padding: 10px;")
+        self.btn_run.setProperty("class", "cta")
+        # self.btn_run.setStyleSheet("background-color: #00796b; font-weight: bold; padding: 10px;")
         self.btn_run.clicked.connect(self.run_pipeline)
         layout.addWidget(self.btn_run)
 

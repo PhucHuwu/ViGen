@@ -1,0 +1,161 @@
+/* Global Defaults - Softer Dark Theme (Apple-like) */
+QWidget {
+    background-color: #1C1C1E; /* Apple System Gray 6 (Base) */
+    color: #F2F2F7; /* Apple Label Color */
+    font-family: "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+}
+
+/* Tab Widget Panel */
+QTabWidget::pane {
+    border: 1px solid #3A3A3C; /* Apple System Gray 4 */
+    background-color: #2C2C2E; /* Apple System Gray 5 */
+    border-radius: 12px;
+    margin-top: -1px;
+}
+
+QTabBar::tab {
+    background-color: #1C1C1E; 
+    color: #98989D; /* Secondary Label */
+    padding: 10px 20px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border: 1px solid transparent;
+    font-weight: 500;
+}
+
+QTabBar::tab:selected {
+    background-color: #2C2C2E;
+    color: #0A84FF; /* Apple Blue */
+    border: 1px solid #3A3A3C;
+    border-bottom: 1px solid #2C2C2E;
+}
+
+QTabBar::tab:hover {
+    background-color: #2C2C2E;
+    color: #FFFFFF;
+}
+
+/* Input Fields */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background-color: #2C2C2E; /* System Gray 5 */
+    border: 1px solid #3A3A3C;
+    border-radius: 10px;
+    padding: 10px;
+    color: #FFFFFF;
+    selection-background-color: #0A84FF;
+    selection-color: #FFFFFF;
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #0A84FF;
+    background-color: #1C1C1E;
+}
+
+/* Group Box */
+QGroupBox {
+    border: 1px solid #3A3A3C;
+    border-radius: 12px;
+    margin-top: 24px;
+    font-weight: bold;
+    color: #8E8E93; /* System Gray */
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 10px;
+    color: #0A84FF;
+}
+
+/* Labels */
+QLabel {
+    color: #F2F2F7;
+}
+
+QLabel[class="header"] {
+    font-size: 18px;
+    font-weight: 600; /* Semi-bold */
+    color: #FFFFFF;
+    margin-bottom: 8px;
+}
+
+QLabel[class="subtext"] {
+    font-size: 12px;
+    color: #8E8E93; /* Secondary Label */
+}
+
+/* Splitter */
+QSplitter::handle {
+    background-color: #3A3A3C;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #2C2C2E;
+    border: 1px solid #3A3A3C;
+    border-radius: 10px;
+    padding: 10px 20px;
+    color: #F2F2F7;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background-color: #3A3A3C;
+    border-color: #636366;
+}
+
+QPushButton:pressed {
+    background-color: #1C1C1E;
+}
+
+/* Primary Button (Apple Blue) */
+QPushButton[class="primary"] {
+    background-color: #007AFF; 
+    border: 1px solid #007AFF;
+    color: #FFFFFF;
+}
+
+QPushButton[class="primary"]:hover {
+    background-color: #0062CC;
+}
+
+/* CTA Button (Apple Green) */
+QPushButton[class="cta"] {
+    background-color: #34C759; /* Apple Green */
+    border: 1px solid #34C759;
+    color: #FFFFFF;
+}
+
+QPushButton[class="cta"]:hover {
+    background-color: #2DB14E; /* Darker Green */
+}
+
+/* Danger Button (Apple Red) */
+QPushButton[class="danger"] {
+    background-color: #FF3B30;
+    border: 1px solid #FF3B30;
+    color: #FFFFFF;
+}
+
+QPushButton[class="danger"]:hover {
+    background-color: #D63028;
+}
+
+/* Scrollbars */
+QScrollBar:vertical {
+    border: none;
+    background: #1C1C1E;
+    width: 10px;
+    margin: 0px 0px 0px 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: #48484A; /* System Gray 3 */
+    min-height: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
