@@ -7,7 +7,85 @@ from gui.main_window import MainWindow
 import logging
 
 
+import os
+
+
+def ensure_configs():
+    """Ensure that default config files exist."""
+    config_dir = "configs"
+    os.makedirs(config_dir, exist_ok=True)
+
+    defaults = {
+        "idea2video.yaml": """
+chat_model:
+    init_args:
+        model: "google/gemini-2.0-flash-exp:free"
+        model_provider: "openai"
+        api_key: "YOUR_OPENROUTER_API_KEY"
+        base_url: "https://openrouter.ai/api/v1"
+    # Rate limits for chat model API calls
+    max_requests_per_minute: 10
+    max_requests_per_day: 500
+
+image_generator:
+    class_path: "tools.ImageGeneratorNanobananaGoogleAPI"
+    init_args:
+        api_key: "YOUR_GOOGLE_API_KEY"
+    # Rate limits for image generation API calls
+    max_requests_per_minute: 10
+    max_requests_per_day: 500
+
+video_generator:
+    class_path: "tools.VideoGeneratorVeoGoogleAPI"
+    init_args:
+        api_key: "YOUR_GOOGLE_API_KEY"
+    # Rate limits for video generation API calls
+    max_requests_per_minute: 2
+    max_requests_per_day: 10
+
+working_dir: .working_dir/idea2video
+""",
+        "script2video.yaml": """
+chat_model:
+    init_args:
+        model: "google/gemini-2.0-flash-exp:free"
+        model_provider: "openai"
+        api_key: "YOUR_OPENROUTER_API_KEY"
+        base_url: "https://openrouter.ai/api/v1"
+    # Rate limits for chat model API calls
+    max_requests_per_minute: 10
+    max_requests_per_day: 500
+
+image_generator:
+    class_path: "tools.ImageGeneratorNanobananaGoogleAPI"
+    init_args:
+        api_key: "YOUR_GOOGLE_API_KEY"
+    # Rate limits for image generation API calls
+    max_requests_per_minute: 10
+    max_requests_per_day: 500
+
+video_generator:
+    class_path: "tools.VideoGeneratorVeoGoogleAPI"
+    init_args:
+        api_key: "YOUR_GOOGLE_API_KEY"
+    # Rate limits for video generation API calls
+    max_requests_per_minute: 2
+    max_requests_per_day: 10
+
+working_dir: .working_dir/script2video
+"""
+    }
+
+    for filename, content in defaults.items():
+        path = os.path.join(config_dir, filename)
+        if not os.path.exists(path):
+            logging.info(f"Creating default config: {path}")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content.strip())
+
+
 def main():
+    ensure_configs()
     app = QApplication(sys.argv)
 
     # Setup Async Loop

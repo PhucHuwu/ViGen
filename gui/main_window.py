@@ -9,7 +9,7 @@ from gui.tabs.script2video_tab import Script2VideoTab
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("ViMax - AI Video Generator")
+        self.setWindowTitle("ViGen - AI Video Generator")
         self.resize(1200, 800)
 
         # Main Layout
