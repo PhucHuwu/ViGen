@@ -85,7 +85,7 @@ jobs:
 
     build-macos-intel:
         name: Build macOS Intel
-        runs-on: macos-latest # Use ARM runner
+        runs-on: macos-15-intel
         steps:
             - name: Checkout Code
               uses: actions/checkout@v4
@@ -94,7 +94,6 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: "3.12"
-                  architecture: "x64" # Force Intel architecture (Rosetta)
                   cache: "pip"
 
             - name: Install Dependencies
@@ -134,7 +133,6 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: "3.12"
-                  architecture: "arm64" # Native ARM
                   cache: "pip"
 
             - name: Install Dependencies
