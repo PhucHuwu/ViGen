@@ -51,6 +51,7 @@ jobs:
                   # Output to GITHUB_OUTPUT with fixed delimiter
                   echo "changelog<<__CHANGELOG_EOF__" >> "$GITHUB_OUTPUT"
                   cat release_notes.md >> "$GITHUB_OUTPUT"
+                  echo "" >> "$GITHUB_OUTPUT"
                   echo "__CHANGELOG_EOF__" >> "$GITHUB_OUTPUT"
 
     build-windows:
