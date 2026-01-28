@@ -31,31 +31,28 @@ jobs:
                   default_bump: patch
                   release_branches: main
 
-      - name: Build Changelog
-        id: build_changelog
-        run: |
-          echo "## What's Changed" > release_notes.md
-          echo "" >> release_notes.md
-          
-          # The 'mathieudutour' action outputs 'previous_tag' and 'new_tag'
-          OLD_TAG="${{ steps.tag_version.outputs.previous_tag }}"
-          NEW_TAG="${{ steps.tag_version.outputs.new_tag }}"
-          
-          echo "Generating changelog from $OLD_TAG to $NEW_TAG"
-          
-          if [ -z "$OLD_TAG" ] || [ "$OLD_TAG" == "v0.0.0" ]; then
-             # First release or no prev tag: Log last 10 commits
-             git log --pretty=format:"- %s (%h)" -10 >> release_notes.md
-          else
-             # Log commits between tags
-             git log --pretty=format:"- %s (%h)" $OLD_TAG..HEAD >> release_notes.md
-          fi
+            - name: Build Changelog
+              id: build_changelog
+              run: |
+                  echo "## What's Changed" > release_notes.md
+                  echo "" >> release_notes.md
 
-          # Output to GITHUB_OUTPUT with multiline delimiter
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "changelog<<$EOF" >> "$GITHUB_OUTPUT"
-          cat release_notes.md >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
+                  OLD_TAG="${{ steps.tag_version.outputs.previous_tag }}"
+                  NEW_TAG="${{ steps.tag_version.outputs.new_tag }}"
+
+                  echo "Generating changelog from $OLD_TAG to $NEW_TAG"
+
+                  if [ -z "$OLD_TAG" ] || [ "$OLD_TAG" == "v0.0.0" ]; then
+                     git log --pretty=format:"- %s (%h)" -10 >> release_notes.md
+                  else
+                     git log --pretty=format:"- %s (%h)" $OLD_TAG..HEAD >> release_notes.md
+                  fi
+
+                  # Output to GITHUB_OUTPUT with multiline delimiter
+                  EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+                  echo "changelog<<$EOF" >> "$GITHUB_OUTPUT"
+                  cat release_notes.md >> "$GITHUB_OUTPUT"
+                  echo "$EOF" >> "$GITHUB_OUTPUT"
 
     build-windows:
         name: Build Windows
@@ -88,7 +85,7 @@ jobs:
 
     build-macos-intel:
         name: Build macOS Intel
-        runs-on: macos-15-intel
+        runs-on: macos-latest # Use ARM runner
         steps:
             - name: Checkout Code
               uses: actions/checkout@v4
@@ -97,6 +94,7 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: "3.12"
+                  architecture: "x64" # Force Intel architecture (Rosetta)
                   cache: "pip"
 
             - name: Install Dependencies
@@ -111,7 +109,8 @@ jobs:
 
             - name: Build App
               run: |
-                  pyinstaller --windowed --name ViGen --icon ViGen.icns gui/main.py
+                  # Use --onedir instead of --onefile for better compatibility on macOS
+                  pyinstaller --onedir --windowed --name ViGen --icon ViGen.icns gui/main.py
 
             - name: Zip App
               run: |
@@ -135,6 +134,7 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: "3.12"
+                  architecture: "arm64" # Native ARM
                   cache: "pip"
 
             - name: Install Dependencies
@@ -149,7 +149,8 @@ jobs:
 
             - name: Build App
               run: |
-                  pyinstaller --windowed --name ViGen --icon ViGen.icns gui/main.py
+                  # Use --onedir for stability
+                  pyinstaller --onedir --windowed --name ViGen --icon ViGen.icns gui/main.py
 
             - name: Zip App
               run: |
