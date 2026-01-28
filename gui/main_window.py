@@ -6,11 +6,20 @@ from gui.tabs.idea2video_tab import Idea2VideoTab
 from gui.tabs.script2video_tab import Script2VideoTab
 
 
+from PyQt6.QtGui import QIcon
+import os
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("ViGen - AI Video Generator")
         self.resize(1200, 800)
+
+        # Set Window Icon
+        icon_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
 
         # Main Layout
         central_widget = QWidget()

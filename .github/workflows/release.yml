@@ -44,8 +44,8 @@ jobs:
 
             - name: Build EXE with PyInstaller
               run: |
-                  # Build ViGen.exe, windowed (no console), including configs folder
-                  pyinstaller --onefile --windowed --name ViGen --add-data "configs;configs" gui/main.py
+                  # Build ViGen.exe, windowed (no console), including icon
+                  pyinstaller --onefile --windowed --name ViGen --icon "gui/assets/logo.ico" gui/main.py
 
             - name: Create Release
               uses: softprops/action-gh-release@v1
