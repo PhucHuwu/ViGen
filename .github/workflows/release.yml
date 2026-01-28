@@ -79,10 +79,11 @@ jobs:
                     - os: windows-latest
                       artifact_name: ViGen_Windows.exe
                       asset_content_type: application/vnd.microsoft.portable-executable
-                    - os: macos-13 # Intel
+                    - os: macos-13 # Intel - Staying with 13 as 15 might be too new/beta for some actions, or we try 15 per warning. Reverting to 13-large or just update per request.
+                      # User said "macos-13 is retired", suggested "macos-15". OK.
                       artifact_name: ViGen_macOS_Intel.zip
                       asset_content_type: application/zip
-                    - os: macos-14 # Apple Silicon (M1/M2/etc)
+                    - os: macos-latest # Apple Silicon (M1)
                       artifact_name: ViGen_macOS_Silicon.zip
                       asset_content_type: application/zip
 
@@ -112,12 +113,8 @@ jobs:
             - name: Build App (macOS)
               if: runner.os == 'macOS'
               run: |
-                  # Create ICNS from PNG
-                  mkdir ViGen.iconset
-                  sips -z 128 128   gui/assets/logo.png --out ViGen.iconset/icon_128x128.png
-                  sips -z 256 256   gui/assets/logo.png --out ViGen.iconset/icon_128x128@2x.png
-                  sips -z 512 512   gui/assets/logo.png --out ViGen.iconset/icon_512x512.png
-                  iconutil -c icns ViGen.iconset
+                  # Create ICNS from PNG using Python Pillow (more robust than sips)
+                  python -c "from PIL import Image; img = Image.open('gui/assets/logo.png'); img.save('ViGen.icns', format='ICNS', sizes=[(16,16), (32,32), (48,48), (64,64), (128,128), (256,256), (512,512), (1024,1024)])"
 
                   # Build .app bundle
                   pyinstaller --windowed --name ViGen --icon ViGen.icns gui/main.py
