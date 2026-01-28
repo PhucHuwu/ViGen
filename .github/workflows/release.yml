@@ -76,6 +76,8 @@ jobs:
             fail-fast: false
             matrix:
                 include:
+                    - os: windows-latest
+                      artifact_name: ViGen_Windows.exe
                     - os: macos-latest # Run on M1 (Rosetta allows x64 build)
                       architecture: x64
                       artifact_name: ViGen_macOS_Intel.zip
