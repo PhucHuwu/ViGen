@@ -79,8 +79,7 @@ jobs:
                     - os: windows-latest
                       artifact_name: ViGen_Windows.exe
                       asset_content_type: application/vnd.microsoft.portable-executable
-                    - os: macos-13 # Intel - Staying with 13 as 15 might be too new/beta for some actions, or we try 15 per warning. Reverting to 13-large or just update per request.
-                      # User said "macos-13 is retired", suggested "macos-15". OK.
+                    - os: macos-15 # Intel (Updated from macos-13)
                       artifact_name: ViGen_macOS_Intel.zip
                       asset_content_type: application/zip
                     - os: macos-latest # Apple Silicon (M1)
