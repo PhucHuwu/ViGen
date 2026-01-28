@@ -5,21 +5,23 @@ on:
         branches:
             - main
         tags-ignore:
-            - "v*" # Avoid infinite loop if action pushes a tag
+            - "v*"
 
 permissions:
     contents: write
 
 jobs:
-    build-and-release:
-        name: Build Windows EXE and Release
-        runs-on: windows-latest
-
+    create-release:
+        name: Create Release
+        runs-on: ubuntu-latest
+        outputs:
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
+            new_tag: ${{ steps.tag_version.outputs.new_tag }}
         steps:
             - name: Checkout Code
               uses: actions/checkout@v4
               with:
-                  fetch-depth: 0 # Required for version determination and changelog
+                  fetch-depth: 0
 
             - name: Bump version and push tag
               id: tag_version
@@ -28,6 +30,65 @@ jobs:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
                   default_bump: patch
                   release_branches: main
+
+            - name: Build Changelog
+              id: build_changelog
+              uses: mikepenz/release-changelog-builder-action@v4
+              with:
+                  configuration: |
+                      {
+                        "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
+                        "categories": [
+                          {
+                              "title": "## 🚀 Features",
+                              "labels": ["feature", "feat"]
+                          },
+                          {
+                              "title": "## 🐛 Fixes",
+                              "labels": ["fix", "bug"]
+                          },
+                          {
+                              "title": "## 🧪 Tests",
+                              "labels": ["test"]
+                          }
+                        ]
+                      }
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Create Release
+              id: create_release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ steps.tag_version.outputs.new_tag }}
+                  name: Release ${{ steps.tag_version.outputs.new_tag }}
+                  body: ${{ steps.build_changelog.outputs.changelog }}
+                  draft: false
+                  prerelease: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    build:
+        name: Build (${{ matrix.os }})
+        needs: create-release
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - os: windows-latest
+                      artifact_name: ViGen_Windows.exe
+                      asset_content_type: application/vnd.microsoft.portable-executable
+                    - os: macos-13 # Intel
+                      artifact_name: ViGen_macOS_Intel.zip
+                      asset_content_type: application/zip
+                    - os: macos-14 # Apple Silicon (M1/M2/etc)
+                      artifact_name: ViGen_macOS_Silicon.zip
+                      asset_content_type: application/zip
+
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
             - name: Setup Python
               uses: actions/setup-python@v5
@@ -39,21 +100,43 @@ jobs:
               run: |
                   python -m pip install --upgrade pip
                   pip install pyinstaller
-                  # Core libraries used in the project
                   pip install PyQt6 qasync qt-material "google-genai" "langchain" "langchain-community" "langchain-core" "langchain-openai" "moviepy" "pillow" "pydantic" "pyyaml" "tenacity" "tqdm" "requests" "httpx" "python-dotenv"
 
-            - name: Build EXE with PyInstaller
+            # Windows Build
+            - name: Build EXE (Windows)
+              if: runner.os == 'Windows'
               run: |
-                  # Build ViGen.exe, windowed (no console), including icon
                   pyinstaller --onefile --windowed --name ViGen --icon "gui/assets/logo.ico" gui/main.py
 
-            - name: Create Release
-              uses: softprops/action-gh-release@v1
-              with:
-                  tag_name: ${{ steps.tag_version.outputs.new_tag }}
-                  name: Release ${{ steps.tag_version.outputs.new_tag }}
-                  body: ${{ steps.tag_version.outputs.changelog }}
-                  files: |
-                      dist/ViGen.exe
+            # macOS Build
+            - name: Build App (macOS)
+              if: runner.os == 'macOS'
+              run: |
+                  # Create ICNS from PNG
+                  mkdir ViGen.iconset
+                  sips -z 128 128   gui/assets/logo.png --out ViGen.iconset/icon_128x128.png
+                  sips -z 256 256   gui/assets/logo.png --out ViGen.iconset/icon_128x128@2x.png
+                  sips -z 512 512   gui/assets/logo.png --out ViGen.iconset/icon_512x512.png
+                  iconutil -c icns ViGen.iconset
+
+                  # Build .app bundle
+                  pyinstaller --windowed --name ViGen --icon ViGen.icns gui/main.py
+
+                  # Zip the app
+                  cd dist
+                  zip -r ../${{ matrix.artifact_name }} ViGen.app
+
+            - name: Rename Windows Asset
+              if: runner.os == 'Windows'
+              run: |
+                  mv dist/ViGen.exe ${{ matrix.artifact_name }}
+
+            - name: Upload Release Asset
+              uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.upload_url }}
+                  asset_path: ${{ runner.os == 'Windows' && matrix.artifact_name || matrix.artifact_name }}
+                  asset_name: ${{ matrix.artifact_name }}
+                  asset_content_type: ${{ matrix.asset_content_type }}
