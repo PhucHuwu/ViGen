@@ -31,30 +31,31 @@ jobs:
                   default_bump: patch
                   release_branches: main
 
-            - name: Build Changelog
-              id: build_changelog
-              uses: mikepenz/release-changelog-builder-action@v4
-              with:
-                  configuration: |
-                      {
-                        "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
-                        "categories": [
-                          {
-                              "title": "## 🚀 Features",
-                              "labels": ["feature", "feat"]
-                          },
-                          {
-                              "title": "## 🐛 Fixes",
-                              "labels": ["fix", "bug"]
-                          },
-                          {
-                              "title": "## 🧪 Tests",
-                              "labels": ["test"]
-                          }
-                        ]
-                      }
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Changelog
+        id: build_changelog
+        run: |
+          echo "## What's Changed" > release_notes.md
+          echo "" >> release_notes.md
+          
+          # The 'mathieudutour' action outputs 'previous_tag' and 'new_tag'
+          OLD_TAG="${{ steps.tag_version.outputs.previous_tag }}"
+          NEW_TAG="${{ steps.tag_version.outputs.new_tag }}"
+          
+          echo "Generating changelog from $OLD_TAG to $NEW_TAG"
+          
+          if [ -z "$OLD_TAG" ] || [ "$OLD_TAG" == "v0.0.0" ]; then
+             # First release or no prev tag: Log last 10 commits
+             git log --pretty=format:"- %s (%h)" -10 >> release_notes.md
+          else
+             # Log commits between tags
+             git log --pretty=format:"- %s (%h)" $OLD_TAG..HEAD >> release_notes.md
+          fi
+
+          # Output to GITHUB_OUTPUT with multiline delimiter
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "changelog<<$EOF" >> "$GITHUB_OUTPUT"
+          cat release_notes.md >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
 
     build-windows:
         name: Build Windows
