@@ -75,7 +75,13 @@ jobs:
 
             - name: Build EXE
               run: |
-                  pyinstaller --onefile --windowed --name ViGen --icon "gui/assets/logo.ico" gui/main.py
+                  pyinstaller --onefile --windowed --name ViGen --icon "gui/assets/logo.ico" \
+                    --hidden-import PyQt6.QtCore \
+                    --hidden-import PyQt6.QtGui \
+                    --hidden-import PyQt6.QtWidgets \
+                    --collect-all PyQt6 \
+                    --collect-all qt_material \
+                    gui/main.py
 
             - name: Upload Artifact
               uses: actions/upload-artifact@v4
@@ -109,7 +115,20 @@ jobs:
             - name: Build App
               run: |
                   # Use --onedir instead of --onefile for better compatibility on macOS
-                  pyinstaller --onedir --windowed --name ViGen --icon ViGen.icns gui/main.py
+                  pyinstaller --onedir --windowed --name ViGen --icon ViGen.icns \
+                    --hidden-import PyQt6.QtCore \
+                    --hidden-import PyQt6.QtGui \
+                    --hidden-import PyQt6.QtWidgets \
+                    --collect-all PyQt6 \
+                    --collect-all qt_material \
+                    gui/main.py
+
+                  # Create qt.conf to help Qt find its resources
+                  mkdir -p dist/ViGen.app/Contents/Resources
+                  echo "[Paths]" > dist/ViGen.app/Contents/Resources/qt.conf
+                  echo "Prefix = ../Resources" >> dist/ViGen.app/Contents/Resources/qt.conf
+                  echo "Binaries = ../MacOS" >> dist/ViGen.app/Contents/Resources/qt.conf
+                  echo "Plugins = ../PlugIns" >> dist/ViGen.app/Contents/Resources/qt.conf
 
             - name: Zip App
               run: |
@@ -148,7 +167,20 @@ jobs:
             - name: Build App
               run: |
                   # Use --onedir for stability
-                  pyinstaller --onedir --windowed --name ViGen --icon ViGen.icns gui/main.py
+                  pyinstaller --onedir --windowed --name ViGen --icon ViGen.icns \
+                    --hidden-import PyQt6.QtCore \
+                    --hidden-import PyQt6.QtGui \
+                    --hidden-import PyQt6.QtWidgets \
+                    --collect-all PyQt6 \
+                    --collect-all qt_material \
+                    gui/main.py
+
+                  # Create qt.conf to help Qt find its resources
+                  mkdir -p dist/ViGen.app/Contents/Resources
+                  echo "[Paths]" > dist/ViGen.app/Contents/Resources/qt.conf
+                  echo "Prefix = ../Resources" >> dist/ViGen.app/Contents/Resources/qt.conf
+                  echo "Binaries = ../MacOS" >> dist/ViGen.app/Contents/Resources/qt.conf
+                  echo "Plugins = ../PlugIns" >> dist/ViGen.app/Contents/Resources/qt.conf
 
             - name: Zip App
               run: |

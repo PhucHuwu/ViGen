@@ -1,6 +1,7 @@
 import sys
 import asyncio
 from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QCoreApplication
 from qasync import QEventLoop
 from qt_material import apply_stylesheet
 from gui.main_window import MainWindow
@@ -86,6 +87,14 @@ working_dir: .working_dir/script2video
 
 def main():
     ensure_configs()
+    
+    # Fix Qt plugin paths for PyInstaller on macOS
+    if hasattr(sys, '_MEIPASS'):
+        # Running in PyInstaller bundle
+        qt_plugin_path = os.path.join(sys._MEIPASS, 'PyQt6', 'Qt6', 'plugins')
+        if os.path.exists(qt_plugin_path):
+            QCoreApplication.setLibraryPaths([qt_plugin_path])
+    
     app = QApplication(sys.argv)
 
     # Setup Async Loop
