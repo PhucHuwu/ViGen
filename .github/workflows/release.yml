@@ -137,6 +137,21 @@ jobs:
                   echo "Binaries = ../MacOS" >> dist/ViGen.app/Contents/Resources/qt.conf
                   echo "Plugins = ../PlugIns" >> dist/ViGen.app/Contents/Resources/qt.conf
 
+                  # Fix Info.plist to ensure proper app launch
+                  if [ -f "dist/ViGen.app/Contents/Info.plist" ]; then
+                    /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable ViGen" dist/ViGen.app/Contents/Info.plist 2>/dev/null || \
+                    /usr/libexec/PlistBuddy -c "Add :CFBundleExecutable string ViGen" dist/ViGen.app/Contents/Info.plist
+                    
+                    /usr/libexec/PlistBuddy -c "Set :CFBundleName ViGen" dist/ViGen.app/Contents/Info.plist 2>/dev/null || \
+                    /usr/libexec/PlistBuddy -c "Add :CFBundleName string ViGen" dist/ViGen.app/Contents/Info.plist
+                    
+                    /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.vigen.app" dist/ViGen.app/Contents/Info.plist 2>/dev/null || \
+                    /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string com.vigen.app" dist/ViGen.app/Contents/Info.plist
+                  fi
+
+                  # Set executable permissions
+                  chmod +x dist/ViGen.app/Contents/MacOS/ViGen
+
             - name: Zip App
               run: |
                   cd dist
@@ -201,6 +216,21 @@ jobs:
                   echo "Prefix = ../Resources" >> dist/ViGen.app/Contents/Resources/qt.conf
                   echo "Binaries = ../MacOS" >> dist/ViGen.app/Contents/Resources/qt.conf
                   echo "Plugins = ../PlugIns" >> dist/ViGen.app/Contents/Resources/qt.conf
+
+                  # Fix Info.plist to ensure proper app launch
+                  if [ -f "dist/ViGen.app/Contents/Info.plist" ]; then
+                    /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable ViGen" dist/ViGen.app/Contents/Info.plist 2>/dev/null || \
+                    /usr/libexec/PlistBuddy -c "Add :CFBundleExecutable string ViGen" dist/ViGen.app/Contents/Info.plist
+                    
+                    /usr/libexec/PlistBuddy -c "Set :CFBundleName ViGen" dist/ViGen.app/Contents/Info.plist 2>/dev/null || \
+                    /usr/libexec/PlistBuddy -c "Add :CFBundleName string ViGen" dist/ViGen.app/Contents/Info.plist
+                    
+                    /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.vigen.app" dist/ViGen.app/Contents/Info.plist 2>/dev/null || \
+                    /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string com.vigen.app" dist/ViGen.app/Contents/Info.plist
+                  fi
+
+                  # Set executable permissions
+                  chmod +x dist/ViGen.app/Contents/MacOS/ViGen
 
             - name: Zip App
               run: |

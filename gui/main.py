@@ -11,9 +11,26 @@ import logging
 import os
 
 
+def get_config_dir():
+    """Get the config directory path based on platform and runtime."""
+    if hasattr(sys, '_MEIPASS'):
+        # Running in PyInstaller bundle - use user's config directory
+        if sys.platform == 'darwin':  # macOS
+            base_dir = os.path.expanduser('~/Library/Application Support/ViGen')
+        elif sys.platform == 'win32':  # Windows
+            base_dir = os.path.join(os.getenv('APPDATA'), 'ViGen')
+        else:  # Linux
+            base_dir = os.path.expanduser('~/.config/ViGen')
+    else:
+        # Running from source - use local configs directory
+        base_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'configs')
+    
+    return base_dir
+
+
 def ensure_configs():
     """Ensure that default config files exist."""
-    config_dir = "configs"
+    config_dir = get_config_dir()
     os.makedirs(config_dir, exist_ok=True)
 
     defaults = {
