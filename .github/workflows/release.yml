@@ -48,11 +48,10 @@ jobs:
                      git log --pretty=format:"- %s (%h)" $OLD_TAG..HEAD >> release_notes.md
                   fi
 
-                  # Output to GITHUB_OUTPUT with multiline delimiter
-                  EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-                  echo "changelog<<$EOF" >> "$GITHUB_OUTPUT"
+                  # Output to GITHUB_OUTPUT with fixed delimiter
+                  echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
                   cat release_notes.md >> "$GITHUB_OUTPUT"
-                  echo "$EOF" >> "$GITHUB_OUTPUT"
+                  echo "EOF" >> "$GITHUB_OUTPUT"
 
     build-windows:
         name: Build Windows
