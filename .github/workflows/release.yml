@@ -75,7 +75,7 @@ jobs:
 
             - name: Build EXE
               run: |
-                  pyinstaller --onefile --windowed --name ViGen --icon "gui/assets/logo.ico" --hidden-import PyQt6.QtCore --hidden-import PyQt6.QtGui --hidden-import PyQt6.QtWidgets --collect-all PyQt6 --collect-all qt_material gui/main.py
+                  pyinstaller --onefile --windowed --name ViGen --icon "gui/assets/logo.ico" --hidden-import PyQt6.QtCore --hidden-import PyQt6.QtGui --hidden-import PyQt6.QtWidgets --hidden-import cv2 --collect-all PyQt6 --collect-all qt_material gui/main.py
 
             - name: Upload Artifact
               uses: actions/upload-artifact@v4
@@ -100,7 +100,7 @@ jobs:
               run: |
                   python -m pip install --upgrade pip
                   pip install pyinstaller
-                  pip install PyQt6 qasync qt-material "google-genai" "langchain" "langchain-community" "langchain-core" "langchain-openai" "moviepy" "pillow" "pydantic" "pyyaml" "tenacity" "tqdm" "requests" "httpx" "python-dotenv"
+                  pip install PyQt6 qasync qt-material "google-genai" "langchain" "langchain-community" "langchain-core" "langchain-openai" "moviepy" "pillow" "pydantic" "pyyaml" "tenacity" "tqdm" "requests" "httpx" "python-dotenv" "opencv-python" "scenedetect[opencv]"
 
             - name: Create Icon
               run: |
@@ -113,6 +113,7 @@ jobs:
                     --hidden-import PyQt6.QtCore \
                     --hidden-import PyQt6.QtGui \
                     --hidden-import PyQt6.QtWidgets \
+                    --hidden-import cv2 \
                     --collect-all PyQt6 \
                     --collect-all qt_material \
                     gui/main.py
@@ -152,7 +153,7 @@ jobs:
               run: |
                   python -m pip install --upgrade pip
                   pip install pyinstaller
-                  pip install PyQt6 qasync qt-material "google-genai" "langchain" "langchain-community" "langchain-core" "langchain-openai" "moviepy" "pillow" "pydantic" "pyyaml" "tenacity" "tqdm" "requests" "httpx" "python-dotenv"
+                  pip install PyQt6 qasync qt-material "google-genai" "langchain" "langchain-community" "langchain-core" "langchain-openai" "moviepy" "pillow" "pydantic" "pyyaml" "tenacity" "tqdm" "requests" "httpx" "python-dotenv" "opencv-python" "scenedetect[opencv]"
 
             - name: Create Icon
               run: |
@@ -165,6 +166,7 @@ jobs:
                     --hidden-import PyQt6.QtCore \
                     --hidden-import PyQt6.QtGui \
                     --hidden-import PyQt6.QtWidgets \
+                    --hidden-import cv2 \
                     --collect-all PyQt6 \
                     --collect-all qt_material \
                     gui/main.py
