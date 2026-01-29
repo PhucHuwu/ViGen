@@ -11,9 +11,8 @@ from interfaces import CharacterInScene, ShotDescription, ShotBriefDescription
 from utils.retry import after_func
 
 
-
 system_prompt_template_design_storyboard = \
-"""
+    """
 [Role]
 You are a professional storyboard artist with the following core skills:
 - Script Analysis: Ability to quickly interpret a script's text, identifying the setting, character actions, dialogue, emotions, and narrative pacing.
@@ -50,11 +49,12 @@ The user will provide the following input.
 - Each shot requires an independent description without reference to each other.
 - When the shot focuses on a character, describe which specific body part the focus is on.
 - When describing a character, it is necessary to indicate the direction they are facing.
+- CRITICAL: Do not use proper names of copyrighted characters, famous fairy tales, or IPs (e.g., 'Spider-Man', 'Mickey Mouse', 'Little Red Riding Hood'). Use generic, descriptive terms instead (e.g., 'a girl in a red hooded cloak', 'a superhero', 'a cartoon mouse'). Avoid specific trademarked visual elements.
 """
 
 
 human_prompt_template_design_storyboard = \
-"""
+    """
 <SCRIPT>
 {script_str}
 </SCRIPT>
@@ -69,9 +69,8 @@ human_prompt_template_design_storyboard = \
 """
 
 
-
 system_prompt_template_decompose_visual_description = \
-"""
+    """
 [Role]
 You are a professional visual text analyst, proficient in cinematic language and shot narration. Your expertise lies in deconstructing a comprehensive shot description accurately into three core components: the static first frame, the static last frame, and the dynamic motion that connects them.
 
@@ -107,11 +106,12 @@ Additionally, you will receive a sequence of potential characters, each containi
 - When describing a character, it is necessary to indicate the direction they are facing.
 - The first shot must establish the overall scene environment, using the widest possible shot.
 - Use as few camera positions as possible.
+- CRITICAL: Do not use proper names of copyrighted characters, famous fairy tales, or IPs (e.g., 'Spider-Man', 'Mickey Mouse', 'Little Red Riding Hood'). Use generic, descriptive terms instead (e.g., 'a girl in a red hooded cloak', 'a superhero', 'a cartoon mouse'). Avoid specific trademarked visual elements.
 """
 
 
 human_prompt_template_decompose_visual_description = \
-"""
+    """
 <VISUAL_DESC>
 {visual_desc}
 </VISUAL_DESC>
@@ -166,14 +166,12 @@ class VisDescDecompositionResponse(BaseModel):
     )
 
 
-
 class StoryboardArtist:
     def __init__(
         self,
         chat_model: BaseChatModel,
     ):
         self.chat_model = chat_model
-
 
     @retry(stop=stop_after_attempt(3), after=after_func)
     async def design_storyboard(
@@ -206,9 +204,6 @@ class StoryboardArtist:
         storyboard = response.storyboard
 
         return storyboard
-
-
-
 
     @retry(stop=stop_after_attempt(3), after=after_func)
     async def decompose_visual_description(

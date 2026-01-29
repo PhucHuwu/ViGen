@@ -15,13 +15,13 @@ from utils.timer import Timer
 from utils.rate_limiter import RateLimiter
 import importlib
 
+
 class Script2VideoPipeline:
 
     # events
     character_portrait_events = {}
     shot_desc_events = {}
     frame_events = {}
-
 
     def __init__(
         self,
@@ -43,8 +43,6 @@ class Script2VideoPipeline:
 
         self.working_dir = working_dir
         os.makedirs(self.working_dir, exist_ok=True)
-
-
 
     @classmethod
     def init_from_config(
@@ -165,8 +163,6 @@ class Script2VideoPipeline:
                     json.dump(character_portraits_registry, f, ensure_ascii=False, indent=4)
                 print(f"☑️ Generated {len(character_portraits_registry)} character portraits and saved to {character_portraits_registry_path}.")
 
-
-
         # design shots
         storyboard = await self.design_storyboard(
             script=script,
@@ -203,8 +199,17 @@ class Script2VideoPipeline:
             )
             for shot_description in shot_descriptions
         ]
-        tasks.extend(video_tasks)
+        # Run frame generation tasks first (concurrently)
+        print(f"🖼️ Running {len(tasks)} frame generation tasks...")
         await asyncio.gather(*tasks)
+
+        # Run video generation tasks sequentially to respect strict rate limits (Test 2 RPM)
+        print(f"🎬 Running {len(video_tasks)} video generation tasks sequentially...")
+        for i, video_task in enumerate(video_tasks):
+            print(f"▶️ Starting video task {i+1}/{len(video_tasks)}...")
+            await video_task
+            # Add a small buffer between sequential requests just in case
+            await asyncio.sleep(2)
 
         final_video_path = os.path.join(self.working_dir, "final_video.mp4")
         if os.path.exists(final_video_path):
@@ -220,7 +225,6 @@ class Script2VideoPipeline:
             print(f"☑️ Concatenated videos, saved to {final_video_path}.")
 
         return final_video_path
-
 
     async def generate_frames_for_single_camera(
         self,
@@ -247,7 +251,7 @@ class Script2VideoPipeline:
                 registry_item = character_portraits_registry[identifier_in_scene]
                 for view, item in registry_item.items():
                     available_image_path_and_text_pairs.append((item["path"], item["description"]))
-            
+
             # generate the first_frame based on the shot_description.ff_desc
             if camera.parent_shot_idx is not None:
                 # generate the first_frame based on the transition video
@@ -283,7 +287,6 @@ class Script2VideoPipeline:
                             f"The composition and background are correct but some elements may be wrong. The wrong elements should be replaced.\nWrong elements: {camera.missing_info}.\nYou must select this image as the main reference and replace the characters in the image with the provided character portraits. Don't change the background."
                         )
                     )
-
 
             # 如果子镜头缺少信息，则需要选择参考图像生成
             if camera.parent_shot_idx is None or camera.missing_info is not None:
@@ -322,15 +325,14 @@ class Script2VideoPipeline:
                 self.frame_events[first_shot_idx]["first_frame"].set()
                 print(f"☑️ Generated first_frame for shot {first_shot_idx}, saved to {first_shot_ff_path}.")
 
-
         # 2. generate the following frames of the camera
         priority_tasks = []
         normal_tasks = []
 
         if shot_descriptions[first_shot_idx].variation_type in ["medium", "large"]:
             task = self.generate_frame_for_single_shot(
-                shot_idx=first_shot_idx, 
-                frame_type="last_frame", 
+                shot_idx=first_shot_idx,
+                frame_type="last_frame",
                 first_shot_ff_path_and_text_pair=(first_shot_ff_path, shot_descriptions[first_shot_idx].ff_desc),
                 frame_desc=shot_descriptions[first_shot_idx].lf_desc,
                 visible_characters=[characters[idx] for idx in shot_descriptions[first_shot_idx].lf_vis_char_idxs],
@@ -340,23 +342,22 @@ class Script2VideoPipeline:
 
         for shot_idx in camera.active_shot_idxs[1:]:
             first_frame_task = self.generate_frame_for_single_shot(
-                    shot_idx=shot_idx, 
-                    frame_type="first_frame", 
-                    first_shot_ff_path_and_text_pair=(first_shot_ff_path, shot_descriptions[first_shot_idx].ff_desc),
-                    frame_desc=shot_descriptions[shot_idx].ff_desc,
-                    visible_characters=[characters[idx] for idx in shot_descriptions[shot_idx].ff_vis_char_idxs],
-                    character_portraits_registry=character_portraits_registry,
-                )
+                shot_idx=shot_idx,
+                frame_type="first_frame",
+                first_shot_ff_path_and_text_pair=(first_shot_ff_path, shot_descriptions[first_shot_idx].ff_desc),
+                frame_desc=shot_descriptions[shot_idx].ff_desc,
+                visible_characters=[characters[idx] for idx in shot_descriptions[shot_idx].ff_vis_char_idxs],
+                character_portraits_registry=character_portraits_registry,
+            )
             if shot_idx in priority_shot_idxs:
                 priority_tasks.append(first_frame_task)
             else:
                 normal_tasks.append(first_frame_task)
 
-
             if shot_descriptions[shot_idx].variation_type in ["medium", "large"]:
                 last_frame_task = self.generate_frame_for_single_shot(
-                    shot_idx=shot_idx, 
-                    frame_type="last_frame", 
+                    shot_idx=shot_idx,
+                    frame_type="last_frame",
                     first_shot_ff_path_and_text_pair=(first_shot_ff_path, shot_descriptions[first_shot_idx].ff_desc),
                     frame_desc=shot_descriptions[shot_idx].lf_desc,
                     visible_characters=[characters[idx] for idx in shot_descriptions[shot_idx].lf_vis_char_idxs],
@@ -364,11 +365,8 @@ class Script2VideoPipeline:
                 )
                 normal_tasks.append(last_frame_task)
 
-
         await asyncio.gather(*priority_tasks)
         await asyncio.gather(*normal_tasks)
-
-
 
     async def generate_video_for_single_shot(
         self,
@@ -451,10 +449,8 @@ class Script2VideoPipeline:
             frame_image.save(frame_image_path)
             print(f"☑️ Generated {frame_type} frame for shot {shot_idx}, saved to {frame_image_path}.")
 
-
         self.frame_events[shot_idx][frame_type].set()
         return frame_image_path
-
 
     async def construct_camera_tree(
         self,
@@ -482,9 +478,6 @@ class Script2VideoPipeline:
         print(f"✅ Constructed camera tree and saved to {camera_tree_path}.")
         return camera_tree
 
-
-
-
     async def extract_characters(
         self,
         script: str,
@@ -507,7 +500,6 @@ class Script2VideoPipeline:
 
         return characters
 
-
     async def generate_character_portraits(
         self,
         characters: List[CharacterInScene],
@@ -521,7 +513,6 @@ class Script2VideoPipeline:
                     character_portraits_registry = json.load(f)
             else:
                 character_portraits_registry = {}
-
 
         tasks = [
             self.generate_portraits_for_single_character(character, style)
@@ -539,7 +530,6 @@ class Script2VideoPipeline:
             print("🚀 All characters already have portraits, skipping portrait generation.")
         return character_portraits_registry
 
-
     async def generate_portraits_for_single_character(
         self,
         character: CharacterInScene,
@@ -554,7 +544,6 @@ class Script2VideoPipeline:
         else:
             front_portrait_output = await self.character_portraits_generator.generate_front_portrait(character, style)
             front_portrait_output.save(front_portrait_path)
-
 
         side_portrait_path = os.path.join(character_dir, "side.png")
         if os.path.exists(side_portrait_path):
@@ -591,8 +580,6 @@ class Script2VideoPipeline:
             }
         }
 
-
-
     async def design_storyboard(
         self,
         script: str,
@@ -622,8 +609,6 @@ class Script2VideoPipeline:
 
         return storyboard
 
-
-
     async def decompose_visual_descriptions(
         self,
         shot_brief_descriptions: List[ShotBriefDescription],
@@ -636,7 +621,6 @@ class Script2VideoPipeline:
 
         shot_descriptions = await asyncio.gather(*tasks)
         return shot_descriptions
-
 
     async def decompose_visual_description_for_single_shot_brief_description(
         self,

@@ -46,7 +46,7 @@ Upon first launch, ViGen will create a `configs` folder with template files. You
 
 - **GUI**: PyQt6, Qt-Material
 - **AI Orchestration**: LangChain
-- **Models**: Google Gemini 2.0 Flash, Imagen 3, Veo 2
+- **Models**: Google Gemini 2.5 Flash Image, Imagen 3, Veo 3.1
 - **Video Processing**: MoviePy
 
 ## License

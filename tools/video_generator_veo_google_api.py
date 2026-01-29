@@ -28,7 +28,7 @@ class VideoGeneratorVeoGoogleAPI:
         self.client = genai.Client(
             api_key=api_key,
         )
-    
+
     async def generate_single_video(
         self,
         prompt: str,
@@ -94,17 +94,31 @@ class VideoGeneratorVeoGoogleAPI:
             logging.error(error_msg)
             raise RuntimeError(error_msg)
 
-        if not operation.response:
-            error_msg = "Video generation completed but no response received"
+        logging.info(f"Operation done. Result: {operation.result}")
+
+        # Check for safety ratings or other reasons in result/metadata if available
+        if hasattr(operation, 'metadata'):
+            logging.info(f"Operation Metadata: {operation.metadata}")
+
+        if not hasattr(operation, 'result') or not operation.result:
+            # Sometimes the result is in 'result' attribute not 'response' depending on SDK version
+            # But 'response' is usually the unpacked result. Let's check both.
+            pass
+
+        # The SDK might put the response in .result instead of .response for LROs
+        response = operation.result if hasattr(operation, 'result') else getattr(operation, 'response', None)
+
+        if not response:
+            error_msg = f"Video generation completed but no response/result received. Full op: {operation}"
             logging.error(error_msg)
             raise RuntimeError(error_msg)
 
-        if not hasattr(operation.response, 'generated_videos') or not operation.response.generated_videos:
-            error_msg = "Video generation completed but no videos were generated"
+        if not hasattr(response, 'generated_videos') or not response.generated_videos:
+            error_msg = f"Veo Content Filter triggered. Reason: {getattr(response, 'rai_media_filtered_reasons', 'Unknown')}. \nPropmt causing error: '{prompt}'"
             logging.error(error_msg)
             raise RuntimeError(error_msg)
 
-        generated_video = operation.response.generated_videos[0]
+        generated_video = response.generated_videos[0]
         self.client.files.download(file=generated_video.video)
 
         video_output = VideoOutput(
