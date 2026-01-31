@@ -4,6 +4,7 @@ import asyncio
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError
+from httpx import RemoteProtocolError, ConnectError, TimeoutException
 from interfaces.video_output import VideoOutput
 from utils.rate_limiter import RateLimiter
 
@@ -76,17 +77,33 @@ class VideoGeneratorVeoGoogleAPI:
                 )
                 break
             except ClientError as e:
-                if e.status_code == 429 and attempt < max_retries - 1:
+                if e.code == 429 and attempt < max_retries - 1:
                     wait_time = retry_delay * (2 ** attempt)
                     logging.warning(f"Rate limit hit (429), retrying in {wait_time}s... (attempt {attempt + 1}/{max_retries})")
                     await asyncio.sleep(wait_time)
                 else:
                     raise
 
+        # Poll operation status with retry logic for network errors
+        poll_max_retries = 5
+        poll_retry_delay = 2
+
         while not operation.done:
             await asyncio.sleep(2)
-            operation = self.client.operations.get(operation)
-            logging.info(f"Video generation not completed, waiting 2 seconds...")
+
+            for poll_attempt in range(poll_max_retries):
+                try:
+                    operation = self.client.operations.get(operation)
+                    logging.info(f"Video generation not completed, waiting 2 seconds...")
+                    break
+                except (RemoteProtocolError, ConnectError, TimeoutException, Exception) as e:
+                    if poll_attempt < poll_max_retries - 1:
+                        wait_time = poll_retry_delay * (2 ** poll_attempt)
+                        logging.warning(f"Network error while polling operation: {e}. Retrying in {wait_time}s... (attempt {poll_attempt + 1}/{poll_max_retries})")
+                        await asyncio.sleep(wait_time)
+                    else:
+                        logging.error(f"Failed to poll operation status after {poll_max_retries} retries")
+                        raise
 
         # Check if operation completed successfully
         if operation.error:
